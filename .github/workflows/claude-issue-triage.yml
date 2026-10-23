@@ -22,6 +22,26 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Ensure triage labels exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          create() { gh label create "$1" --color "$2" --description "$3" --force; }
+          create "bug"                "d73a4a" "Algo no funciona correctamente"
+          create "enhancement"        "a2eeef" "Nueva funcionalidad o mejora"
+          create "documentation"      "0075ca" "Mejoras o adiciones a la documentación"
+          create "question"           "d876e3" "Se solicita más información"
+          create "invalid"            "e4e669" "Issue no accionable"
+          create "good first issue"   "7057ff" "Bueno para quienes empiezan"
+          create "area:gameplay"      "1d76db" "Lógica de juego: piezas, colisiones, rotación"
+          create "area:ui"            "0e8a16" "Interfaz: canvas, HTML y CSS"
+          create "area:controls"      "fbca04" "Entrada de teclado y controles"
+          create "area:scoring"       "f9d0c4" "Puntaje, líneas y niveles"
+          create "priority:high"      "b60205" "Prioridad alta"
+          create "priority:medium"    "ff9f1c" "Prioridad media"
+          create "priority:low"       "c2e0c6" "Prioridad baja"
+
       - name: Triage issue with Claude
         uses: anthropics/claude-code-action@v1
         with:
@@ -41,25 +61,52 @@ jobs:
 
             Pasos:
             1. Lee el issue: `gh issue view ${{ github.event.issue.number }} --json title,body,labels`.
-            2. Lee los labels disponibles: `gh label list`. Solo puedes usar labels que ya existan; nunca crees labels nuevos.
+            2. Lee los labels disponibles: `gh label list`. Los labels ya fueron creados por el workflow; usa solo los de la lista de abajo y nunca crees labels nuevos.
             3. Lee `CLAUDE.md` y el código relevante (`game.js`, `index.html`, `style.css`) para entender el problema.
             4. Asigna labels con `gh issue edit ${{ github.event.issue.number }} --add-label "..."`:
                - Un tipo: `bug`, `enhancement`, `documentation` o `question`.
                - Un área: `area:gameplay`, `area:ui`, `area:controls` o `area:scoring`.
                - Una prioridad: `priority:high`, `priority:medium` o `priority:low`.
+               - Opcional: `good first issue` si el cambio es pequeño, acotado y apto para principiantes.
+               Aplica TODOS los labels en un solo comando (`--add-label "bug,area:ui,priority:low"`) y verifica con `gh issue view` que quedaron asignados.
                Si el evento es `edited`, quita con `--remove-label` los labels de tipo, área o prioridad que ya no apliquen.
             5. Publica el diagnóstico en un único comentario, reemplazando el anterior del bot si existe:
                `gh issue comment ${{ github.event.issue.number }} --edit-last --create-if-none --body-file -`
                (envía el Markdown por stdin con un heredoc).
 
-            Formato del comentario (en español, directo y técnico):
+            Formato del comentario: Markdown válido para GitHub (en español, directo y técnico).
+            Usa exactamente esta estructura, con encabezados `###`, una línea en blanco entre bloques,
+            listas con `-`, pasos numerados con `1.`, checklist con `- [ ]` y código en backticks
+            (usa bloques ```js con fences para fragmentos de más de una línea):
+
             ## 🔍 Diagnóstico automático
-            - **Resumen:** una o dos frases.
-            - **Clasificación:** tipo / área / prioridad, con una línea de justificación.
-            - **Archivos y funciones afectados:** referencias como `game.js:línea` (`collide`, `tryRotate`, `clearLines`, etc.).
-            - **Causa probable / análisis:** qué ocurre en el código y por qué.
-            - **Propuesta de implementación:** pasos concretos y ordenados para resolverlo.
-            - **Criterios de aceptación:** lista verificable.
-            - **Preguntas abiertas:** solo si falta información para reproducir o decidir.
+
+            ### 📝 Resumen
+            Una o dos frases.
+
+            ### 🏷️ Clasificación
+            | Tipo | Área | Prioridad |
+            |------|------|-----------|
+            | `bug` | `area:ui` | `priority:low` |
+
+            Una línea de justificación.
+
+            ### 📂 Archivos y funciones afectados
+            - `game.js:123` — `collide`, `tryRotate`, `clearLines`, etc.
+
+            ### 🧠 Causa probable / análisis
+            Qué ocurre en el código y por qué.
+
+            ### 🛠️ Propuesta de implementación
+            1. Paso concreto.
+            2. Paso concreto.
+
+            ### ✅ Criterios de aceptación
+            - [ ] Criterio verificable.
+
+            ### ❓ Preguntas abiertas
+            Solo si falta información para reproducir o decidir; si no, omite esta sección.
+
+            No uses HTML ni texto fuera de esta estructura. Cita el heredoc con comillas simples (`<<'EOF'`) para que backticks y `$` no se expandan.
 
             Si el issue no es accionable (spam, sin contenido), indícalo brevemente en el comentario y usa el label `invalid`.
