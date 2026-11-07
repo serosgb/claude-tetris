@@ -242,7 +242,7 @@ let skin = SKINS.retro;
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
   context.save();
-  context.globalAlpha = alpha === undefined ? 1 : alpha * (skin.ghostAlpha / 0.2);
+  context.globalAlpha = alpha === undefined ? 1 : skin.ghostAlpha;
   skin.drawBlock(context, x * size, y * size, skin.colors[colorIndex], size);
   context.restore();
 }
@@ -379,6 +379,7 @@ function init() {
 }
 
 document.addEventListener('keydown', e => {
+  if (e.target === skinSelect) { e.preventDefault(); skinSelect.blur(); return; }
   if (e.code === 'KeyP') { togglePause(); return; }
   if (paused || gameOver) return;
   switch (e.code) {

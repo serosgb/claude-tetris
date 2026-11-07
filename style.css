@@ -176,8 +176,3 @@ kbd {
   font-family: inherit;
   cursor: pointer;
 }
-
-#board,
-#next-canvas {
-  transition: background 0.2s;
-}
