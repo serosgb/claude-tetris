@@ -309,6 +309,7 @@ function loadRecords() {
         combo: Number(r.combo) || 0,
         date: String(r.date ?? ''),
       }))
+      .sort((a, b) => b.score - a.score)
       .slice(0, MAX_RECORDS);
   } catch (e) {
     return [];
@@ -375,6 +376,7 @@ function renderRecords(container, list, highlight) {
 }
 
 function showGameOverRecords() {
+  pendingScore = null;
   updateStats();
   const list = loadRecords();
   overlayRecords.classList.remove('hidden');
@@ -437,6 +439,7 @@ clearBtn.addEventListener('click', () => {
 document.addEventListener('keydown', e => {
   if (e.target instanceof HTMLInputElement) return;
   if (!started) {
+    if (e.target instanceof HTMLButtonElement) return;
     if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); startGame(); }
     return;
   }
